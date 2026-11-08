@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shorts Bulk Scheduler</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
+    --text:#e8eaf0; --muted:#9aa3b2; --accent:#ff3d3d; --accent2:#ff6b6b;
+    --green:#2ecc71; --yellow:#f1c40f; --red:#e74c3c; --blue:#4da3ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Devanagari",sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.45}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px}
+  .logo{width:30px;height:21px;background:var(--accent);border-radius:6px;position:relative}
+  .logo:after{content:"";position:absolute;left:12px;top:5px;border-left:9px solid #fff;border-top:5.5px solid transparent;border-bottom:5.5px solid transparent}
+  nav{display:flex;gap:6px}
+  nav button{background:transparent;border:1px solid var(--line);color:var(--muted);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:13px}
+  nav button.active{background:var(--panel2);color:var(--text);border-color:#444b59}
+  main{max-width:1200px;margin:0 auto;padding:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+  .card h2{margin:0 0 4px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .step{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;align-items:center;justify-content:center;font-weight:700}
+  .hint{color:var(--muted);font-size:12.5px;margin:2px 0 12px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+  input,select,textarea{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 10px;font:inherit;font-size:13px}
+  textarea{resize:vertical;width:100%}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
+  .btn{background:var(--panel2);border:1px solid #3a4150;color:var(--text);padding:9px 14px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+  .btn:hover{border-color:#566070}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent2)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.sm{padding:5px 9px;font-size:12px}
+  .drop{border:2px dashed #3a4150;border-radius:12px;padding:26px;text-align:center;color:var(--muted);cursor:pointer;transition:.15s}
+  .drop.over{border-color:var(--accent);background:#2a1618;color:var(--text)}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);font-size:12px}
+  .dot{width:8px;height:8px;border-radius:50%}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:860px){.grid2{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse}
+  .vrow{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--panel2)}
+  .vrow.green{border-left:4px solid var(--green)}
+  .vrow.yellow{border-left:4px solid var(--yellow)}
+  .vrow.red{border-left:4px solid var(--red)}
+  .vhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .fname{font-weight:600;word-break:break-all}
+  .badge{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700}
+  .b-green{background:#123d25;color:var(--green)} .b-yellow{background:#3d3510;color:var(--yellow)} .b-red{background:#3d1612;color:#ff7b6b}
+  .vbody{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:860px){.vbody{grid-template-columns:1fr}}
+  .vbody input,.vbody textarea,.vbody select{width:100%}
+  .count{font-size:11px;color:var(--muted);text-align:right}
+  .count.over{color:var(--red)}
+  .progress{height:6px;background:#2a2f3a;border-radius:4px;overflow:hidden;margin-top:8px}
+  .progress > div{height:100%;width:0;background:var(--accent);transition:width .2s}
+  .status{font-size:12px;margin-top:6px;color:var(--muted)}
+  .status.ok{color:var(--green)} .status.err{color:#ff7b6b}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .muted{color:var(--muted)}
+  .warn{background:#2e2610;border:1px solid #5a4a14;color:#f5d76e;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+  .guide h3{margin:22px 0 6px;font-size:15px}
+  .guide ol,.guide ul{padding-left:20px} .guide li{margin:5px 0}
+  .guide code,.mono{background:#0b0d11;border:1px solid var(--line);padding:1px 6px;border-radius:5px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+  pre{background:#0b0d11;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;font-size:12.5px;white-space:pre-wrap}
+  .hidden{display:none!important}
+  .chan{display:flex;align-items:center;gap:8px}
+  .chan img{width:28px;height:28px;border-radius:50%}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{background:var(--panel2);border:0;color:var(--muted);padding:8px 12px;cursor:pointer;font-size:13px}
+  .seg button.on{background:var(--accent);color:#fff}
+  .pchk{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);cursor:pointer;font-weight:600;font-size:13px}
+  .pchk input{width:16px;height:16px;accent-color:var(--accent)}
+  .pline{font-size:12px;margin-top:3px}
+  .qrow{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--panel2);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .summary{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="logo"></div>Shorts Bulk Scheduler <span class="badge b-green" style="font-size:10px">v2 · YT + Insta + FB</span></div>
+  <nav>
+    <button data-tab="app" class="active">App</button>
+    <button data-tab="queue">Insta/FB Queue</button>
+    <button data-tab="settings">Settings</button>
+    <button data-tab="guide">Setup Guide</button>
+  </nav>
+  <div id="authBox" class="row" style="gap:8px;align-items:center">
+    <span id="chanInfo" class="chan muted">Not connected</span>
+    <button id="connectBtn" class="btn primary sm">YouTube Connect</button>
+  </div>
+</header>
+
+<main>
+<!-- ================= APP TAB ================= -->
+<section id="tab-app">
+  <div id="noClientWarn" class="warn hidden">⚠️ Pehle <b>Settings</b> me apna Google OAuth <b>Client ID</b> daaliye. Kaise banana hai — <b>Setup Guide</b> tab dekhiye.</div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2><span class="step">1</span> Videos chuniye</h2>
+      <p class="hint">Ek saath jitni chahe Shorts select ya drag-drop kariye (9:16, 3 min se chhoti).</p>
+      <div id="drop" class="drop">📁 Videos yahan drop kariye<br><span style="font-size:12px">ya click karke select kariye</span></div>
+      <input id="fileInput" type="file" accept="video/*" multiple class="hidden">
+      <div id="fileSummary" class="hint" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">2</span> Title / Description paste kariye</h2>
+      <p class="hint">Saari videos ka text ek saath paste kariye ya .txt file load kariye. App har video se khud match kar dega.</p>
+      <textarea id="pasteBox" rows="8" placeholder="Video: how-to-kill-a-mat&#10;Title: Mat ko kaise hataye? 😮&#10;Description: Is video me jaaniye...&#10;#shorts #hacks #hindi&#10;---&#10;Video: atm-cash-kaise-nikalti-hai&#10;Title: ATM se cash kaise nikalta hai?&#10;..."></textarea>
+      <div class="row" style="margin-top:8px;justify-content:space-between">
+        <div class="row" style="gap:8px">
+          <button id="loadTxtBtn" class="btn sm">📄 .txt load</button>
+          <input id="txtInput" type="file" accept=".txt,text/plain" multiple class="hidden">
+          <button id="sampleBtn" class="btn sm">Format dekhiye</button>
+        </div>
+        <button id="matchBtn" class="btn primary">🔍 Auto Match &amp; Fill</button>
+      </div>
+      <div id="parseInfo" class="hint" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">3</span> Schedule</h2>
+    <p class="hint">Kahan post karna hai chuniye. YouTube khud tay time par public karega; Instagram/Facebook ko aapka Cloudflare Worker time par post karega — upload ke baad browser band kar sakte hain.</p>
+    <div class="row" style="margin-bottom:14px;gap:8px">
+      <label class="pchk"><input type="checkbox" id="pf_yt" checked> ▶️ YouTube Shorts</label>
+      <label class="pchk"><input type="checkbox" id="pf_ig"> 📸 Instagram Reels</label>
+      <label class="pchk"><input type="checkbox" id="pf_fb"> 📘 Facebook Reels</label>
+    </div>
+    <div class="row">
+      <label class="f">Mode
+        <select id="pubMode">
+          <option value="schedule">Schedule (time par public)</option>
+          <option value="public">Abhi Public</option>
+          <option value="unlisted">Unlisted</option>
+          <option value="private">Private (sirf upload)</option>
+        </select>
+      </label>
+      <label class="f">Pehli video kab
+        <input id="startAt" type="datetime-local">
+      </label>
+      <div class="f" style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)">Gap ka tareeka
+        <div class="seg" id="gapSeg"><button data-v="fixed" class="on">Fixed</button><button data-v="random">Random</button></div>
+      </div>
+      <label class="f" id="fixedBox">Har video ke beech
+        <span class="row" style="gap:6px"><input id="gapFixed" type="number" min="1" value="3" style="width:80px">
+        <select id="gapUnit"><option value="60">ghante</option><option value="1">minute</option></select></span>
+      </label>
+      <label class="f hidden" id="randomBox">Random gap (kam se kam – zyada se zyada)
+        <span class="row" style="gap:6px"><input id="gapMin" type="number" min="1" value="2" style="width:70px"> –
+        <input id="gapMax" type="number" min="1" value="5" style="width:70px">
+        <select id="gapUnitR"><option value="60">ghante</option><option value="1">minute</option></select></span>
+      </label>
+      <label class="f">Sirf in ghanton me post karein
+        <span class="row" style="gap:6px"><input id="winStart" type="time" value="08:00"> se <input id="winEnd" type="time" value="22:00"></span>
+      </label>
+      <button id="applySchedBtn" class="btn">⏱ Time lagaiye</button>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <label class="f">Category
+        <select id="category">
+          <option value="22">People &amp; Blogs</option>
+          <option value="27">Education</option>
+          <option value="24">Entertainment</option>
+          <option value="26">Howto &amp; Style</option>
+          <option value="25">News &amp; Politics</option>
+          <option value="28">Science &amp; Technology</option>
+          <option value="23">Comedy</option>
+          <option value="10">Music</option>
+          <option value="20">Gaming</option>
+        </select>
+      </label>
+      <label class="f">Language
+        <select id="lang"><option value="hi">Hindi</option><option value="en">English</option><option value="">—</option></select>
+      </label>
+      <label class="f">Bachchon ke liye bani?
+        <select id="kids"><option value="false">Nahi</option><option value="true">Haan (Made for Kids)</option></select>
+      </label>
+      <label class="f">Subscribers ko notify
+        <select id="notify"><option value="true">Haan</option><option value="false">Nahi</option></select>
+      </label>
+      <label class="f">Har description me #shorts
+        <select id="addShorts"><option value="true">Haan, jodiye</option><option value="false">Nahi</option></select>
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <h2 style="margin:0"><span class="step">4</span> Preview &amp; Upload</h2>
+      <div class="summary" id="summary"></div>
+    </div>
+    <div id="list"><p class="muted">Abhi koi video nahi hai. Upar Step 1 se videos chuniye.</p></div>
+    <div class="row" style="justify-content:space-between;margin-top:10px">
+      <div class="row" style="gap:8px">
+        <button id="sortBtn" class="btn sm">Naam se sort</button>
+        <button id="clearBtn" class="btn sm">Sab hataiye</button>
+      </div>
+      <div class="row" style="gap:8px">
+        <button id="stopBtn" class="btn hidden">⏸ Rokiye</button>
+        <button id="uploadBtn" class="btn primary">⬆ Sab Upload &amp; Schedule</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= QUEUE TAB ================= -->
+<section id="tab-queue" class="hidden">
+  <div class="card">
+    <div class="toolbar">
+      <h2 style="margin:0">Instagram / Facebook Queue</h2>
+      <div class="row" style="gap:8px"><button id="qRefresh" class="btn sm">↻ Refresh</button><button id="qRun" class="btn sm">▶ Abhi check kariye</button></div>
+    </div>
+    <p class="hint">Worker har 5 minute me check karke time aane par post karta hai (5–10 minute ka antar ho sakta hai). YouTube wali videos YouTube Studio me "Scheduled" dikhengi.</p>
+    <div id="qList" class="muted">Load nahi hua.</div>
+  </div>
+</section>
+
+<!-- ================= SETTINGS TAB ================= -->
+<section id="tab-settings" class="hidden">
+  <div class="card">
+    <h2>Google OAuth Client ID</h2>
+    <p class="hint">Yeh ID sirf aapke browser me save hoti hai. Kaise banaye — Setup Guide dekhiye.</p>
+    <input id="clientId" style="width:100%" placeholder="1234567890-abcxyz.apps.googleusercontent.com">
+    <div class="row" style="margin-top:10px"><button id="saveClient" class="btn primary">Save</button><span id="saveMsg" class="muted"></span></div>
+    <p class="hint" style="margin-top:14px">Is page ka origin (Google Console me "Authorized JavaScript origins" me yahi daaliye):<br><span class="mono" id="originTxt"></span></p>
+  </div>
+  <div class="card">
+    <h2>Instagram + Facebook — Cloudflare Worker</h2>
+    <p class="hint">Sirf Instagram/Facebook ke liye zaroori. Setup Guide ka <b>Part 2</b> dekhiye.</p>
+    <div class="row">
+      <label class="f" style="flex:2;min-width:240px">Worker URL<input id="workerUrl" placeholder="https://shorts-api.aapkanaam.workers.dev"></label>
+      <label class="f" style="flex:1;min-width:160px">App Password<input id="appKey" type="password" placeholder="Worker wala APP_PASSWORD"></label>
+      <button id="saveWorker" class="btn primary">Save &amp; Check</button>
+    </div>
+    <div id="workerStatus" class="hint" style="margin-top:8px"></div>
+    <h2 style="margin-top:16px">Facebook Page + Instagram connect</h2>
+    <p class="hint">Graph API Explorer se token bana kar yahan paste kariye (Guide → Part 2, Step C).</p>
+    <div class="row">
+      <input id="metaToken" style="flex:1;min-width:240px" placeholder="EAAG... (User Access Token)">
+      <button id="metaConnect" class="btn primary">Connect</button>
+      <button id="metaDisconnect" class="btn sm">Disconnect</button>
+    </div>
+    <div id="metaStatus" class="hint" style="margin-top:8px">Meta connect nahi hai</div>
+  </div>
+  <div class="card">
+    <h2>Default hashtags (optional)</h2>
+    <p class="hint">Jo hashtags har video me chahiye, jaise <span class="mono">#hindi #facts</span>. Description ke end me jud jayenge (agar pehle se na hon).</p>
+    <input id="defTags" style="width:100%" placeholder="#hindi #facts">
+    <div class="row" style="margin-top:10px"><button id="saveTags" class="btn">Save</button></div>
+  </div>
+</section>
+
+<!-- ================= GUIDE TAB ================= -->
+<section id="tab-guide" class="hidden">
+  <div class="card guide">
+    <h2>Setup Guide (no coding or Python needed)</h2>
+    <p class="hint">Do <b>Part 1 — YouTube</b> (~20 min) first. Do <b>Part 2 — Instagram + Facebook</b> later, whenever you want.</p>
+
+    <h3 style="color:var(--accent2)">PART 1 — YouTube</h3>
+
+    <h3>Step A — Put the app on Cloudflare</h3>
+    <ol>
+      <li>Log in at <a href="https://dash.cloudflare.com" target="_blank" style="color:var(--blue)">dash.cloudflare.com</a> → <b>Workers &amp; Pages</b> → <b>Create</b> → <b>Pages</b> tab → <b>Upload assets</b> (drag &amp; drop).</li>
+      <li>Give the project a name, e.g. <code>shorts-scheduler</code>.</li>
+      <li>Make a folder that contains only this <code>index.html</code>, drop that folder in → <b>Deploy</b>.</li>
+      <li>You will get a URL like <code>https://shorts-scheduler.pages.dev</code>. Copy it.</li>
+      <li>To update the app later: open the project → <b>Create deployment</b> → drop the folder with the new <code>index.html</code> → Deploy.</li>
+    </ol>
+
+    <h3>Step B — Google Cloud project</h3>
+    <ol>
+      <li>Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--blue)">console.cloud.google.com</a> → project dropdown at the top → <b>New Project</b> → name: <code>Shorts Scheduler</code> → Create.</li>
+      <li><b>APIs &amp; Services → Library</b> → search "<b>YouTube Data API v3</b>" → <b>Enable</b>.</li>
+    </ol>
+
+    <h3>Step C — OAuth consent screen</h3>
+    <ol>
+      <li><b>Google Auth Platform</b> (or <b>APIs &amp; Services → OAuth consent screen</b>) → <b>Get started</b>.</li>
+      <li>App name: <code>Shorts Scheduler</code>, support email: your Gmail. Audience: <b>External</b>. Contact email: your Gmail → agree → Create.</li>
+      <li><b>Audience → Test users → Add users</b> → add the same Gmail that owns your YouTube channel → Save. (If you skip this, login will say "access blocked".)</li>
+      <li><b>Data Access → Add or remove scopes</b> → tick <code>.../auth/youtube.upload</code> and <code>.../auth/youtube.readonly</code> → Update → Save.</li>
+    </ol>
+
+    <h3>Step D — Create the Client ID</h3>
+    <ol>
+      <li><b>Clients → Create client</b> (or <b>Credentials → Create Credentials → OAuth client ID</b>) → Application type: <b>Web application</b>.</li>
+      <li>Under <b>Authorized JavaScript origins</b> → Add URI → your Cloudflare URL, e.g. <code>https://shorts-scheduler.pages.dev</code> (no <b>/</b> at the end).</li>
+      <li>Leave Redirect URIs empty. Click <b>Create</b> → copy the <b>Client ID</b> (it ends with <code>.apps.googleusercontent.com</code>).</li>
+      <li>In this app open <b>Settings</b> → paste the Client ID → Save. (A newly added origin can take 5–10 minutes to start working.)</li>
+    </ol>
+
+    <h3>Step E — Connect &amp; upload</h3>
+    <ol>
+      <li>Click <b>YouTube Connect</b> (top right) → choose your Gmail.</li>
+      <li>If you see "Google hasn't verified this app": click <b>Advanced → Go to Shorts Scheduler (unsafe)</b> → tick all permissions → Continue. It is your own app, so this is safe.</li>
+      <li>Your channel name appears at the top → setup done.</li>
+      <li>Select videos → paste the text → <b>Auto Match &amp; Fill</b> → <b>Set times</b> (⏱) → check everything → <b>Upload</b>.</li>
+      <li>Keep the tab open only while uploading. After "✓ Uploaded" you can close the browser — YouTube publishes each video at its time.</li>
+    </ol>
+
+    <h3>⚠️ Important: Google audit</h3>
+    <ul>
+      <li>Videos uploaded from a new (unverified) Google project are locked to <b>Private</b> and will not go public automatically at the scheduled time. Until the audit is approved, make them Public/Scheduled yourself in YouTube Studio.</li>
+      <li>To remove the lock, fill Google's <b>"YouTube API Services – Audit and Quota Extension Form"</b>. It asks for your app URL, a Privacy Policy and Terms page (you can create these pages on your WordPress site). Approval can take a few weeks.</li>
+      <li>Quota: about <b>100 uploads per day</b> (Google's default limit). Your YouTube channel also has its own separate daily upload limit.</li>
+    </ul>
+
+    <h3 style="color:var(--accent2);margin-top:30px">PART 2 — Instagram + Facebook (~30–40 minutes)</h3>
+    <p class="hint">The Instagram API cannot schedule posts by itself, so a small Cloudflare Worker stores the videos and posts them at the right time. You need the <b>worker.js</b> file that came with this app.</p>
+
+    <h3>✅ Before you start — have these ready</h3>
+    <ul>
+      <li>A <b>Facebook Page</b> where you are an <b>admin</b>.</li>
+      <li>An Instagram account of type <b>Business</b>, linked to that Page (Step A).</li>
+      <li>Your Cloudflare account (the same one that hosts this app).</li>
+      <li>The <b>worker.js</b> file — open it in a text editor (on Ubuntu: "Text Editor") so you can copy its code.</li>
+      <li>A password you choose (e.g. <code>MyShorts@2026</code>) — this becomes your <b>APP_PASSWORD</b>.</li>
+    </ul>
+
+    <h3>Step A — Make Instagram a Business account and link it to your Page</h3>
+    <ol>
+      <li>In the <b>Instagram app</b> → Profile → ☰ menu → <b>Settings and activity</b> → <b>Account type and tools</b> → <b>Switch to professional account</b>.</li>
+      <li>Pick a category (e.g. "Education" or "Digital creator") → choose <b>Business</b> (not Creator).</li>
+      <li>Link it: Instagram → Settings → <b>Accounts Center</b> → <b>Accounts</b> → <b>Add accounts</b> → add your Facebook account. Then Instagram profile → <b>Edit profile</b> → <b>Page</b> → select your Facebook Page.</li>
+      <li>Check: Facebook Page → <b>Settings → Linked accounts</b> should show Instagram as "Connected".</li>
+    </ol>
+
+    <h3>Step B — Create storage on Cloudflare</h3>
+    <ol>
+      <li>Cloudflare dashboard → left menu <b>R2 Object Storage</b> → <b>Enable / Get started</b>. If it asks for a card, add one — there is no charge up to 10 GB.</li>
+      <li><b>Create bucket</b> → name <code>shorts-videos</code> → Location: Automatic → <b>Create</b>.</li>
+      <li>Left menu <b>Storage &amp; Databases → Workers KV</b> → <b>Create instance</b> → name <code>shorts-queue</code> → <b>Create</b>.</li>
+    </ol>
+
+    <h3>Step C — Create the Worker</h3>
+    <ol>
+      <li><b>Workers &amp; Pages → Create → Worker</b> (or "Start with Hello World") → name <code>shorts-api</code> → <b>Deploy</b>.</li>
+      <li>Click <b>Edit code</b> → select all the code on the left (Ctrl+A) and delete it → paste the full code from your <b>worker.js</b> file → click <b>Deploy</b> (top right).</li>
+      <li>Go back to the Worker's page → <b>Settings → Bindings → Add binding</b>:
+        <ul>
+          <li><b>R2 bucket</b> → Variable name: <code>MEDIA</code> (exactly this, in capitals) → bucket: <code>shorts-videos</code> → Add.</li>
+          <li><b>KV namespace</b> → Variable name: <code>DB</code> → namespace: <code>shorts-queue</code> → Add.</li>
+        </ul></li>
+      <li><b>Settings → Variables and Secrets → Add</b> → Type: <b>Secret</b> → Name: <code>APP_PASSWORD</code> → Value: your chosen password → Save/Deploy. (You will add <code>META_APP_ID</code> and <code>META_APP_SECRET</code> the same way after Step D.)</li>
+      <li><b>Settings → Trigger events / Triggers → Add → Cron Triggers</b> → choose "Every 5 minutes" (or type <code>*/5 * * * *</code>) → Add.</li>
+      <li>Copy the Worker URL (shown on its overview page, e.g. <code>https://shorts-api.yourname.workers.dev</code>). Open it in a browser — you should see <b>"Shorts Scheduler worker chal raha hai ✓"</b>.</li>
+      <li>In this app open <b>Settings</b> → enter the Worker URL + App Password → <b>Save &amp; Check</b> → you should see "✓ Worker connected". (A yellow META warning is normal until Step D is done.)</li>
+    </ol>
+
+    <h3>Step D — Meta (Facebook) developer app</h3>
+    <ol>
+      <li>Go to <a href="https://developers.facebook.com" target="_blank" style="color:var(--blue)">developers.facebook.com</a> → log in with Facebook → if it's your first time, click <b>Get Started</b> to create a developer account (verify phone/email).</li>
+      <li><b>My Apps → Create App</b> → App name: <code>Shorts Scheduler</code> → contact email: your Gmail.</li>
+      <li>When asked for a use case, choose <b>"Manage everything on your Page"</b> and <b>"Manage messaging &amp; content on Instagram"</b> (or whichever option mentions publishing content to Instagram). If you see an "Other" option, choose <b>Other → Business</b>. If it asks for a Business portfolio, choose "I don't want to connect" or pick your portfolio.</li>
+      <li>After the app is created: <b>App settings → Basic</b> → copy the <b>App ID</b>, then <b>App secret → Show</b> → copy it.</li>
+      <li>In your Cloudflare Worker → <b>Settings → Variables and Secrets</b> add two more Secrets: <code>META_APP_ID</code> = App ID, <code>META_APP_SECRET</code> = App secret → Save/Deploy.</li>
+      <li>Leave the app in <b>Development</b> mode. You are the app's admin, so no App Review is needed to post to your own Page/Instagram.</li>
+    </ol>
+
+    <h3>Step E — Create a token and connect</h3>
+    <ol>
+      <li>Open <a href="https://developers.facebook.com/tools/explorer" target="_blank" style="color:var(--blue)">Graph API Explorer</a> → on the right, under <b>Meta App</b>, select <code>Shorts Scheduler</code> → under <b>User or Page</b> choose "User Token".</li>
+      <li>Under <b>Permissions</b> add all of these:<br><code>pages_show_list</code> <code>pages_read_engagement</code> <code>pages_manage_posts</code> <code>business_management</code> <code>instagram_basic</code> <code>instagram_content_publish</code></li>
+      <li>Click <b>Generate Access Token</b> → in the popup choose <b>"Opt in to all current and future Pages"</b> or tick your Page, and tick your Instagram account too → Continue / Save.</li>
+      <li>A long token (starting with EAA…) appears in the <b>Access Token</b> box → copy it.</li>
+      <li>In this app: <b>Settings → Facebook Page + Instagram connect</b> → paste → <b>Connect</b>. If you have more than one Page, it will ask for a number.</li>
+      <li>You should see: <b>✓ Connected · Page: your Page · Instagram: @your_username</b>. Setup complete! 🎉</li>
+    </ol>
+
+    <h3>Step F — First test</h3>
+    <ol>
+      <li>App tab → add one short video → tick only <b>Instagram Reels</b> → Mode: <b>Abhi Public</b> (publish now) → Upload.</li>
+      <li>Open the <b>Insta/FB Queue</b> tab → click <b>▶ Abhi check kariye</b> (check now). Within 1–2 minutes it should show "✓ Posted · dekhiye" (view).</li>
+      <li>Once that works, test with Facebook ticked, then start your scheduled bulk uploads.</li>
+      <li>Videos are stored on the Worker until posted, then deleted automatically. Each video must be <b>under 100 MB</b> (Cloudflare free limit). Posts may go out 5–10 minutes after the set time, because the Worker checks every 5 minutes.</li>
+      <li>Instagram caption = Title + Description + hashtags (max 30 hashtags; #shorts is not added on Instagram).</li>
+    </ol>
+
+    <h3>🔧 Troubleshooting (common errors)</h3>
+    <ul>
+      <li><b>"Worker tak nahi pahunch paaye"</b> (can't reach Worker) → the Worker URL is wrong or has extra text at the end. Use only <code>https://….workers.dev</code>.</li>
+      <li><b>"Galat App Password"</b> (wrong password) → the password in the app and the Worker's <code>APP_PASSWORD</code> secret must match exactly (including capitals).</li>
+      <li><b>"R2 binding MEDIA ya KV binding DB nahi mili"</b> (bindings missing) → redo Step C-3; check the names are spelled in capitals.</li>
+      <li><b>"Koi Facebook Page nahi mila"</b> (no Page found) → you didn't tick your Page when creating the token, or <code>pages_show_list</code> was missing. Redo Step E.</li>
+      <li><b>"Instagram Business account juda nahi"</b> (Instagram not linked) → redo Step A; Instagram must be Business type and linked to the same Page. Then create a new token and Connect again.</li>
+      <li><b>"Meta token expire/galat (code 190)"</b> (token expired) → redo Step E (new token → Connect). With META_APP_ID/SECRET set on the Worker, the token lasts much longer.</li>
+      <li><b>"Instagram ne video reject kiya"</b> (video rejected) → the video must be MP4 (H.264 video + AAC audio), 9:16, longer than 3 seconds and under 100 MB.</li>
+      <li><b>Post didn't go out on time</b> → check the Worker's Cron Trigger (Step C-5). Meanwhile you can click "Abhi check kariye" in the Queue tab.</li>
+      <li><b>Code 9 / rate limit</b> → Instagram's daily posting limit; the Worker will automatically retry a little later.</li>
+    </ul>
+
+    <h3>Text paste format</h3>
+<pre>Video: how-to-kill-a-mat
+Title: Mat ko kaise hataye? 😮
+Description: Is video me jaaniye ek aasaan trick.
+A second line is fine too.
+#shorts #hacks #hindi
+---
+Video: atm-cash-kaise-nikalti-hai
+Title: ATM se cash kaise nikalta hai?
+Description: ...
+Tags: atm, bank, cash</pre>
+    <ul>
+      <li>If a block has a <code>Video:</code> line (the file name), the match is exact. Without it, the app matches the words of the <b>Title</b> with the file name.</li>
+      <li><code>---</code> separates one video's block from the next.</li>
+      <li>Words starting with <code>#</code> become both hashtags and tags. A <code>Tags:</code> line takes comma-separated tags.</li>
+      <li>If there are no labels at all: first line = Title, the rest = Description.</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<script>
+/* ============ Storage (safe) ============ */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : v; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+};
+
+/* ============ State ============ */
+let videos = [];      // {id,file,title,desc,tags,time,score,blockIdx,status,progress,videoId,matchedBy}
+let blocks = [];      // parsed text blocks
+let gapMode = 'fixed';
+let token = null, tokenExp = 0, tokenClient = null, tokenWaiter = null;
+let stopFlag = false, uploading = false;
+const $ = s => document.querySelector(s);
+
+/* ============ Tabs ============ */
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('active', x === b));
+  ['app','queue','settings','guide'].forEach(t => $('#tab-'+t).classList.toggle('hidden', t !== b.dataset.tab));
+  if (b.dataset.tab === 'queue') loadQueue();
+});
+
+/* ============ Settings ============ */
+$('#originTxt').textContent = location.origin;
+$('#clientId').value = store.get('clientId','');
+$('#defTags').value = store.get('defTags','');
+$('#saveClient').onclick = () => {
+  store.set('clientId', $('#clientId').value.trim());
+  tokenClient = null; $('#saveMsg').textContent = '✓ Saved'; checkClient();
+  setTimeout(()=>$('#saveMsg').textContent='',2000);
+};
+$('#saveTags').onclick = () => { store.set('defTags', $('#defTags').value.trim()); };
+/* ---- Worker (Instagram/Facebook backend) ---- */
+let metaInfo = null;
+$('#workerUrl').value = store.get('workerUrl','');
+$('#appKey').value = store.get('appKey','');
+$('#saveWorker').onclick = async () => {
+  store.set('workerUrl', $('#workerUrl').value.trim().replace(/\/+$/,''));
+  store.set('appKey', $('#appKey').value);
+  await checkWorker();
+};
+async function wapi(path, opts={}){
+  const base = store.get('workerUrl','');
+  if (!base) throw new Error('Settings me Worker URL daaliye (Guide → Part 2)');
+  const headers = {'X-App-Key': store.get('appKey',''), ...(typeof opts.body==='string'?{'Content-Type':'application/json'}:{}), ...(opts.headers||{})};
+  let r;
+  try{ r = await fetch(base+path, {...opts, headers}); }catch(e){ throw new Error('Worker tak nahi pahunch paaye — URL check kariye'); }
+  let j; try{ j = await r.json(); }catch(e){ throw new Error('Worker se sahi jawab nahi mila (HTTP '+r.status+')'); }
+  if (!r.ok || j.error) throw new Error(j.error || ('HTTP '+r.status));
+  return j;
+}
+async function checkWorker(){
+  const el = $('#workerStatus');
+  if (!store.get('workerUrl','')){ el.textContent=''; return null; }
+  el.textContent = 'Check ho raha hai…';
+  try{
+    const s = await wapi('/api/status');
+    el.innerHTML = '<span style="color:var(--green)">✓ Worker connected</span>' + (s.hasAppSecret ? '' : ' · <span style="color:var(--yellow)">⚠️ META_APP_ID / META_APP_SECRET secret nahi mile — token jaldi expire hoga</span>');
+    showMeta(s.meta); return s;
+  }catch(e){ el.innerHTML = '<span style="color:#ff7b6b">✕ '+esc(e.message)+'</span>'; return null; }
+}
+function showMeta(m){
+  metaInfo = m;
+  $('#metaStatus').innerHTML = m ? `<span style="color:var(--green)">✓ Connected</span> · Page: <b>${esc(m.pageName)}</b> · ${m.igUsername?`Instagram: <b>@${esc(m.igUsername)}</b>`:'<span style="color:var(--yellow)">⚠️ Is Page se koi Instagram Business account juda nahi</span>'}` : 'Meta connect nahi hai';
+}
+$('#metaConnect').onclick = async () => {
+  const token = $('#metaToken').value.trim();
+  if (!token) { alert('Pehle token paste kariye.'); return; }
+  try{
+    let r = await wapi('/api/meta/connect', {method:'POST', body: JSON.stringify({token})});
+    if (r.choose){
+      const list = r.choose.map((p,i)=>`${i+1}. ${p.name}${p.igUsername?'  (@'+p.igUsername+')':''}`).join('\n');
+      const n = prompt('Kaunsa Facebook Page? Number likhiye:\n\n'+list, '1');
+      const pg = r.choose[(+n||0)-1]; if (!pg) return;
+      r = await wapi('/api/meta/connect', {method:'POST', body: JSON.stringify({token, pageId: pg.id})});
+    }
+    showMeta(r.meta); $('#metaToken').value = '';
+  }catch(e){ alert('Connect nahi hua: '+e.message); }
+};
+$('#metaDisconnect').onclick = async () => { try{ await wapi('/api/meta/disconnect',{method:'POST'}); showMeta(null); }catch(e){ alert(e.message); } };
+checkWorker();
+
+/* ---- Queue tab ---- */
+const PL_NAME = {instagram:'📸 Instagram', facebook:'📘 Facebook'};
+const ST_TXT = {scheduled:'⏳ Scheduled', processing:'⚙️ Processing', done:'✓ Posted', error:'✕ Error'};
+async function loadQueue(){
+  const box = $('#qList');
+  if (!store.get('workerUrl','')){ box.innerHTML = 'Instagram/Facebook ke liye pehle Worker setup kariye (Setup Guide → Part 2).'; return; }
+  box.textContent = 'Load ho raha hai…';
+  try{
+    const {jobs} = await wapi('/api/jobs');
+    if (!jobs.length){ box.textContent = 'Queue khaali hai.'; return; }
+    box.innerHTML = '';
+    jobs.forEach(j => {
+      const el = document.createElement('div'); el.className = 'qrow';
+      const lines = Object.entries(j.p).map(([pl,st]) => {
+        const col = st.status==='done'?'var(--green)':st.status==='error'?'#ff7b6b':st.status==='processing'?'var(--blue)':'var(--muted)';
+        let t = `<div class="pline">${PL_NAME[pl]||pl}: <b style="color:${col}">${ST_TXT[st.status]||st.status}</b>`;
+        if (st.link) t += ` · <a href="${esc(st.link)}" target="_blank" style="color:var(--blue)">dekhiye</a>`;
+        if (st.error) t += ` · <span style="color:#ff7b6b">${esc(st.error)}</span>`;
+        else if (st.lastError) t += ` · <span class="muted">(dobara try hoga: ${esc(st.lastError)})</span>`;
+        return t + '</div>';
+      }).join('');
+      const hasErr = Object.values(j.p).some(s=>s.status==='error');
+      el.innerHTML = `<div style="flex:1;min-width:220px"><div class="fname">${esc(j.title||j.fileName)}</div>
+        <div class="muted" style="font-size:12px">${esc(j.fileName)} · 🕒 ${fmtWhen(j.at)}</div>${lines}</div>
+        <div class="row" style="gap:6px;align-items:flex-start">${hasErr && !j.cleaned?'<button class="btn sm" data-a="retry">↻ Retry</button>':''}<button class="btn sm" data-a="del">✕ Hataiye</button></div>`;
+      el.querySelectorAll('[data-a]').forEach(b => b.onclick = async () => {
+        try{
+          if (b.dataset.a==='del'){ if(!confirm('Yeh post queue se hata dein? (Jo post ho chuka hai woh Instagram/Facebook par rahega)')) return; await wapi('/api/jobs/'+j.id,{method:'DELETE'}); }
+          else await wapi('/api/jobs/'+j.id+'/retry',{method:'POST'});
+          loadQueue();
+        }catch(e){ alert(e.message); }
+      });
+      box.appendChild(el);
+    });
+  }catch(e){ box.innerHTML = '<span style="color:#ff7b6b">✕ '+esc(e.message)+'</span>'; }
+}
+$('#qRefresh').onclick = loadQueue;
+$('#qRun').onclick = async () => { $('#qRun').disabled = true; try{ await wapi('/api/run',{method:'POST'}); }catch(e){ alert(e.message); } $('#qRun').disabled = false; loadQueue(); };
+
+function checkClient(){ $('#noClientWarn').classList.toggle('hidden', !!store.get('clientId','')); }
+checkClient();
+['category','lang','kids','notify','addShorts','pubMode','winStart','winEnd','gapFixed','gapUnit','gapMin','gapMax','gapUnitR'].forEach(id=>{
+  const el = $('#'+id), v = store.get('opt_'+id, null);
+  if (v !== null) el.value = v;
+  el.addEventListener('change', ()=>store.set('opt_'+id, el.value));
+});
+['pf_yt','pf_ig','pf_fb'].forEach(id=>{
+  const el = $('#'+id), v = store.get('opt_'+id, null);
+  if (v !== null) el.checked = v === '1';
+  el.addEventListener('change', ()=>{ store.set('opt_'+id, el.checked?'1':'0'); render(); });
+});
+$('#pasteBox').value = store.get('pasteText','');
+$('#pasteBox').addEventListener('input', ()=>store.set('pasteText', $('#pasteBox').value));
+
+/* ============ Start time default ============ */
+function toLocalInput(d){
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+(function(){ const d = new Date(Date.now()+60*60*1000); d.setMinutes(0,0,0); $('#startAt').value = toLocalInput(d); })();
+
+$('#gapSeg').querySelectorAll('button').forEach(b => b.onclick = () => {
+  gapMode = b.dataset.v;
+  $('#gapSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on', x===b));
+  $('#fixedBox').classList.toggle('hidden', gapMode!=='fixed');
+  $('#randomBox').classList.toggle('hidden', gapMode!=='random');
+});
+$('#pubMode').addEventListener('change', render);
+
+/* ============ Auth (Google Identity Services) ============ */
+const SCOPES = 'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly';
+function getTokenClient(){
+  const cid = store.get('clientId','');
+  if (!cid) { alert('Pehle Settings me Client ID daaliye.'); return null; }
+  if (!window.google || !google.accounts) { alert('Google script load nahi hua. Internet check kariye aur page refresh kariye.'); return null; }
+  if (!tokenClient){
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: cid, scope: SCOPES,
+      callback: (resp) => {
+        if (resp.error){ tokenWaiter && tokenWaiter.reject(new Error(resp.error)); tokenWaiter=null; return; }
+        token = resp.access_token; tokenExp = Date.now() + (resp.expires_in-60)*1000;
+        tokenWaiter && tokenWaiter.resolve(token); tokenWaiter = null;
+        loadChannel();
+      },
+      error_callback: (err) => { tokenWaiter && tokenWaiter.reject(new Error(err.type||'popup closed')); tokenWaiter=null; }
+    });
+  }
+  return tokenClient;
+}
+function requestToken(prompt){
+  return new Promise((resolve,reject)=>{
+    const tc = getTokenClient(); if(!tc) return reject(new Error('no client'));
+    tokenWaiter = {resolve,reject};
+    tc.requestAccessToken({prompt});
+  });
+}
+async function ensureToken(){
+  if (token && Date.now() < tokenExp - 5*60*1000) return token;
+  return requestToken(token ? '' : 'consent');
+}
+$('#connectBtn').onclick = () => requestToken(token ? '' : 'consent').catch(e=>alert('Connect nahi hua: '+e.message));
+async function loadChannel(){
+  try{
+    const r = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true',{headers:{Authorization:'Bearer '+token}});
+    const j = await r.json();
+    const c = j.items && j.items[0];
+    if (c){
+      $('#chanInfo').innerHTML = '';
+      const img = document.createElement('img'); img.src = c.snippet.thumbnails.default.url;
+      const s = document.createElement('span'); s.textContent = c.snippet.title; s.style.color='var(--text)';
+      $('#chanInfo').append(img, s);
+      $('#connectBtn').textContent = 'Reconnect';
+    } else { $('#chanInfo').textContent = '✓ Connected'; }
+  }catch(e){ $('#chanInfo').textContent = '✓ Connected'; }
+}
+
+/* ============ File selection ============ */
+const drop = $('#drop');
+drop.onclick = () => $('#fileInput').click();
+$('#fileInput').onchange = e => { addFiles(e.target.files); e.target.value=''; };
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.remove('over');}));
+drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+let uid = 0;
+function addFiles(list){
+  const arr = [...list].filter(f => f.type.startsWith('video/') || /\.(mp4|mov|webm|mkv|avi|m4v)$/i.test(f.name));
+  arr.forEach(f => {
+    if (videos.some(v => v.file.name===f.name && v.file.size===f.size)) return;
+    videos.push({id:++uid,file:f,title:prettyName(f.name),desc:'',tags:[],time:'',score:null,blockIdx:-1,status:'ready',progress:0,st:{}});
+  });
+  if (blocks.length) runMatch(); else render();
+}
+function prettyName(n){
+  let s = n.replace(/\.[^.]+$/,'').replace(/[_\-.]+/g,' ').replace(/\s*\(\d+\)\s*$/,'').trim();
+  return s.charAt(0).toUpperCase()+s.slice(1);
+}
+
+/* ============ Text parsing ============ */
+$('#loadTxtBtn').onclick = () => $('#txtInput').click();
+$('#txtInput').onchange = async e => {
+  const parts = [];
+  for (const f of e.target.files){
+    const t = await f.text();
+    // If a .txt has no "Video:" label, use its filename as the video key
+    parts.push(/^\s*(video|file|filename|फ़ाइल)\s*[:：]/im.test(t) ? t : `Video: ${f.name.replace(/\.txt$/i,'')}\n${t}`);
+  }
+  $('#pasteBox').value = ($('#pasteBox').value.trim() ? $('#pasteBox').value.trim()+'\n---\n' : '') + parts.join('\n---\n');
+  store.set('pasteText', $('#pasteBox').value);
+  e.target.value='';
+};
+$('#sampleBtn').onclick = () => {
+  document.querySelector('nav button[data-tab="guide"]').click();
+  setTimeout(()=>document.querySelector('#tab-guide pre').scrollIntoView({behavior:'smooth',block:'center'}),50);
+};
+
+const LABELS = {
+  video: /^(video|file|filename|file name|video name|वीडियो|फ़ाइल)\s*(?:no\.?\s*\d+)?\s*[:：\-–]\s*/i,
+  title: /^(title|youtube title|shorts title|heading|शीर्षक|टाइटल)\s*[:：\-–]\s*/i,
+  desc:  /^(description|desc|caption|विवरण|डिस्क्रिप्शन)\s*[:：\-–]\s*/i,
+  tags:  /^(tags|keywords|hashtags|टैग)\s*[:：\-–]\s*/i
+};
+function cleanLine(l){ return l.replace(/\*\*/g,'').replace(/^\s*[>]\s?/,'').replace(/\s+$/,''); }
+
+function splitBlocks(text){
+  text = text.replace(/\r/g,'');
+  if (/^\s*(-{3,}|={3,}|_{3,}|\*{3,})\s*$/m.test(text))
+    return text.split(/^\s*(?:-{3,}|={3,}|_{3,}|\*{3,})\s*$/m);
+  const NUM = /^\s*(?:#{1,3}\s*)?(?:video\s*|short\s*|reel\s*)?\d{1,3}\s*[.)\]:-]\s+\S/i;  // "1. ..." numbered
+  const out = []; let cur = [], hasVideo = false, hasTitle = false, prevBlank = true;
+  const flush = () => { if (cur.some(x=>x.trim())) out.push(cur.join('\n')); cur=[]; hasVideo=false; hasTitle=false; };
+  for (const l of text.split('\n')){
+    const t = cleanLine(l).trim();
+    if (LABELS.video.test(t)){ if (hasVideo || hasTitle) flush(); hasVideo = true; }
+    else if (LABELS.title.test(t)){ if (hasTitle) flush(); hasTitle = true; }
+    else if (NUM.test(t) && prevBlank && hasTitle){ flush(); hasTitle = true; }
+    else if (t && !hasTitle && !LABELS.desc.test(t) && !LABELS.tags.test(t) && !/^#/.test(t)) hasTitle = true; // unlabeled first line = title
+    cur.push(l); prevBlank = !t;
+  }
+  flush();
+  if (out.length === 1 && /\n\s*\n\s*\n/.test(text)) return text.split(/\n\s*\n\s*\n+/); // fallback: 2+ blank lines
+  return out;
+}
+
+function parseBlock(chunk){
+  const b = {video:'',title:'',desc:[],tags:[],hashtags:[]};
+  let field = null;
+  for (let raw of chunk.split('\n')){
+    let l = cleanLine(raw); const t = l.trim();
+    let m;
+    if (!t){ if (field==='desc') b.desc.push(''); continue; }
+    if ((m = t.match(LABELS.video))){ b.video = t.slice(m[0].length).trim(); field='video'; continue; }
+    if ((m = t.match(LABELS.title))){ b.title = t.slice(m[0].length).trim(); field='title'; continue; }
+    if ((m = t.match(LABELS.desc))){ const r = t.slice(m[0].length); if (r.trim()) b.desc.push(r); field='desc'; continue; }
+    if ((m = t.match(LABELS.tags))){
+      const r = t.slice(m[0].length);
+      r.split(/[,،]/).forEach(x=>{ x=x.trim(); if(!x) return;
+        if (/^#/.test(x)) x.split(/\s+/).forEach(h=>h.startsWith('#')&&b.hashtags.push(h)); else b.tags.push(x); });
+      field='tags'; continue;
+    }
+    // A line that is only hashtags
+    if (/^(#[\p{L}\p{N}_]+\s*)+$/u.test(t)){ t.split(/\s+/).forEach(h=>b.hashtags.push(h)); continue; }
+    // Unlabeled content
+    if (!b.title && field!=='desc'){
+      b.title = t.replace(/^\s*(?:#{1,3}\s*)?(?:video\s*)?\d{1,3}\s*[.)\]:-]\s+/i,'').trim(); field='title'; continue;
+    }
+    b.desc.push(l); field='desc';
+  }
+  // hashtags inside the description text also count
+  b.desc.join('\n').replace(/#[\p{L}\p{N}_]+/gu, h => { b.hashtags.push(h); return h; });
+  b.hashtags = [...new Set(b.hashtags)];
+  b.descText = b.desc.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+  return b;
+}
+
+function parseAll(text){
+  return splitBlocks(text).map(parseBlock).filter(b => b.title || b.descText || b.video);
+}
+
+/* ============ Fuzzy matching ============ */
+function norm(s){
+  return (s||'').toLowerCase()
+    .replace(/\.(mp4|mov|webm|mkv|avi|m4v|txt)$/i,'')
+    .replace(/\s*[\(\[]\s*(\d+|copy|final|hd|edited)\s*[\)\]]\s*/gi,' ')
+    .replace(/#[\p{L}\p{N}_]+/gu,' ')
+    .replace(/[^\p{L}\p{N}]+/gu,' ')
+    .replace(/\s+/g,' ').trim();
+}
+function bigrams(s){ s = s.replace(/ /g,''); const a=[]; for(let i=0;i<s.length-1;i++) a.push(s.slice(i,i+2)); return a; }
+function dice(a,b){
+  const A = bigrams(a), B = bigrams(b); if (!A.length||!B.length) return a===b?1:0;
+  const map = new Map(); A.forEach(x=>map.set(x,(map.get(x)||0)+1));
+  let hit=0; B.forEach(x=>{ const c=map.get(x); if(c){hit++; map.set(x,c-1);} });
+  return 2*hit/(A.length+B.length);
+}
+const STOP = new Set(['a','an','the','to','of','in','on','is','ka','ki','ke','ko','se','me','hai','aur','kya','video','short','shorts','reel']);
+function tokenScore(a,b){
+  const A = a.split(' ').filter(w=>w && !STOP.has(w)), B = new Set(b.split(' ').filter(w=>w && !STOP.has(w)));
+  if (!A.length || !B.size) return 0;
+  let hit = 0; A.forEach(w=>{ if (B.has(w)) hit++; });
+  return hit / Math.min(A.length, B.size);
+}
+function sim(x,y){
+  const a = norm(x), b = norm(y); if (!a||!b) return 0;
+  if (a===b) return 1;
+  const cA = a.replace(/ /g,''), cB = b.replace(/ /g,'');
+  if (cA.length>=5 && cB.length>=5 && (cA.includes(cB)||cB.includes(cA))) return 0.92;
+  return Math.max(dice(a,b)*0.55 + tokenScore(a,b)*0.45, dice(a,b));
+}
+function blockScore(fileName, b){
+  return Math.max(b.video ? sim(fileName,b.video) : 0, b.title ? sim(fileName,b.title)*0.97 : 0);
+}
+
+$('#matchBtn').onclick = () => {
+  blocks = parseAll($('#pasteBox').value);
+  if (!blocks.length){ $('#parseInfo').textContent = 'Text me koi block nahi mila.'; return; }
+  if (!videos.length){ $('#parseInfo').textContent = `${blocks.length} blocks mile. Ab videos chuniye — match apne aap ho jayega.`; return; }
+  runMatch();
+};
+
+function runMatch(){
+  const pairs = [];
+  videos.forEach((v,vi) => blocks.forEach((b,bi) => pairs.push({vi,bi,s:blockScore(v.file.name,b)})));
+  pairs.sort((p,q)=>q.s-p.s);
+  const usedV = new Set(), usedB = new Set();
+  videos.forEach(v=>{ v.blockIdx=-1; v.score=0; v.matchedBy=''; });
+  for (const p of pairs){
+    if (p.s < 0.3) break;
+    if (usedV.has(p.vi) || usedB.has(p.bi)) continue;
+    usedV.add(p.vi); usedB.add(p.bi);
+    Object.assign(videos[p.vi], {blockIdx:p.bi, score:p.s, matchedBy:'name'});
+  }
+  // Fallback: leftover videos & blocks in the same order
+  const leftV = videos.map((v,i)=>i).filter(i=>!usedV.has(i));
+  const leftB = blocks.map((b,i)=>i).filter(i=>!usedB.has(i));
+  if (leftV.length && leftB.length){
+    leftV.forEach((vi,k)=>{ if (k < leftB.length) Object.assign(videos[vi], {blockIdx:leftB[k], score:0.2, matchedBy:'order'}); });
+  }
+  videos.forEach(v => applyBlock(v));
+  const g = videos.filter(v=>v.score>=0.75).length, y = videos.filter(v=>v.blockIdx>=0 && v.score<0.75).length, r = videos.filter(v=>v.blockIdx<0).length;
+  $('#parseInfo').innerHTML = `${blocks.length} text blocks mile → <span style="color:var(--green)">${g} pakka</span>, <span style="color:var(--yellow)">${y} check kariye</span>, <span style="color:#ff7b6b">${r} bina match</span>`;
+  render();
+}
+function applyBlock(v){
+  if (v.blockIdx < 0){ return; }
+  const b = blocks[v.blockIdx];
+  v.title = (b.title || prettyName(v.file.name)).slice(0,100);
+  v.desc = b.descText;
+  v.tags = [...b.tags, ...b.hashtags.map(h=>h.replace(/^#/,''))];
+  v.hashtags = b.hashtags;
+}
+
+/* ============ Scheduling ============ */
+function parseHM(s){ const [h,m] = (s||'0:0').split(':').map(Number); return h*60+(m||0); }
+function fitWindow(d){
+  const ws = parseHM($('#winStart').value), we = parseHM($('#winEnd').value);
+  if (ws === we) return d;
+  const mins = d.getHours()*60 + d.getMinutes();
+  const inWin = ws < we ? (mins>=ws && mins<we) : (mins>=ws || mins<we);
+  if (inWin) return d;
+  const n = new Date(d); n.setHours(Math.floor(ws/60), ws%60, 0, 0);
+  if (n <= d) n.setDate(n.getDate()+1);
+  return n;
+}
+$('#applySchedBtn').onclick = () => {
+  if (!videos.length) return;
+  let t = new Date($('#startAt').value);
+  if (isNaN(t)) { alert('Pehli video ka time chuniye.'); return; }
+  const minStart = new Date(Date.now()+20*60*1000);
+  if (t < minStart) t = minStart;
+  t = fitWindow(t);
+  videos.forEach((v,i) => {
+    if (i>0){
+      let gap;
+      if (gapMode==='fixed') gap = (+$('#gapFixed').value||1) * (+$('#gapUnit').value);
+      else {
+        const u = +$('#gapUnitR').value, lo = (+$('#gapMin').value||1)*u, hi = Math.max(lo,(+$('#gapMax').value||1)*u);
+        gap = Math.round(lo + Math.random()*(hi-lo));
+      }
+      t = fitWindow(new Date(t.getTime() + gap*60000));
+    }
+    v.time = toLocalInput(t);
+  });
+  if ($('#pubMode').value !== 'schedule') $('#pubMode').value = 'schedule';
+  render();
+};
+
+/* ============ Render list ============ */
+function esc(s){ return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtSize(n){ return n>1048576 ? (n/1048576).toFixed(1)+' MB' : Math.round(n/1024)+' KB'; }
+function fmtWhen(s){ if(!s) return '—'; const d=new Date(s); return d.toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }
+
+function render(){
+  $('#fileSummary').textContent = videos.length ? `${videos.length} videos chuni gayi (${fmtSize(videos.reduce((a,v)=>a+v.file.size,0))})` : '';
+  const list = $('#list');
+  if (!videos.length){ list.innerHTML = '<p class="muted">Abhi koi video nahi hai. Upar Step 1 se videos chuniye.</p>'; $('#summary').innerHTML=''; return; }
+  const sched = $('#pubMode').value === 'schedule';
+  list.innerHTML = '';
+  videos.forEach((v,i) => {
+    let cls='red', badge='<span class="badge b-red">Text match nahi</span>';
+    if (v.blockIdx>=0 && v.score>=0.75){ cls='green'; badge=`<span class="badge b-green">✓ Match ${Math.round(v.score*100)}%</span>`; }
+    else if (v.blockIdx>=0){ cls='yellow'; badge = v.matchedBy==='order' ? '<span class="badge b-yellow">Kram se — check kariye</span>' : `<span class="badge b-yellow">Shayad ${Math.round(v.score*100)}% — check kariye</span>`; }
+    if (!blocks.length){ cls=''; badge=''; }
+    const el = document.createElement('div');
+    el.className = 'vrow '+cls;
+    const opts = ['<option value="-1">— text block chuniye —</option>'].concat(
+      blocks.map((b,bi)=>`<option value="${bi}" ${bi===v.blockIdx?'selected':''}>${bi+1}. ${esc((b.title||b.video||'(bina title)').slice(0,70))}</option>`)).join('');
+    el.innerHTML = `
+      <div class="vhead">
+        <div><span class="muted">#${i+1}</span> <span class="fname">${esc(v.file.name)}</span> <span class="muted" style="font-size:12px">${fmtSize(v.file.size)}</span></div>
+        <div class="row" style="gap:6px;align-items:center">${badge}
+          <button class="btn sm" data-act="up" title="Upar">↑</button>
+          <button class="btn sm" data-act="down" title="Neeche">↓</button>
+          <button class="btn sm" data-act="del" title="Hataiye">✕</button></div>
+      </div>
+      <div class="vbody">
+        <div>
+          ${blocks.length?`<label class="f" style="margin-bottom:8px">Kaunsa text block<select data-k="block">${opts}</select></label>`:''}
+          <label class="f">Title<input data-k="title" maxlength="100" value="${esc(v.title)}"></label>
+          <div class="count ${v.title.length>100?'over':''}">${v.title.length}/100</div>
+          <label class="f">Tags (comma se)<input data-k="tags" value="${esc(v.tags.join(', '))}"></label>
+          ${sched?`<label class="f" style="margin-top:8px">Publish time<input type="datetime-local" data-k="time" value="${v.time}"></label>
+          <div class="hint" style="margin:4px 0 0">${v.time?fmtWhen(v.time):'Upar "Time lagaiye" dabaiye'}</div>`:''}
+        </div>
+        <div>
+          <label class="f">Description<textarea data-k="desc" rows="7">${esc(v.desc)}</textarea></label>
+          <div class="count">${v.desc.length}/5000</div>
+        </div>
+      </div>
+      <div class="progress ${v.status==='ready'?'hidden':''}"><div style="width:${v.progress}%"></div></div>
+      <div class="status">${statusText(v)}</div>`;
+    el.querySelectorAll('[data-k]').forEach(inp => inp.addEventListener(inp.tagName==='SELECT'?'change':'input', () => {
+      const k = inp.dataset.k;
+      if (k==='block'){ v.blockIdx = +inp.value; v.score = v.blockIdx>=0?1:0; v.matchedBy='manual'; applyBlock(v); render(); return; }
+      if (k==='tags') v.tags = inp.value.split(',').map(s=>s.trim()).filter(Boolean);
+      else v[k] = inp.value;
+      if (k==='title'){ const c = inp.parentElement.nextElementSibling; c.textContent = v.title.length+'/100'; c.classList.toggle('over', v.title.length>100); }
+      if (k==='desc'){ inp.parentElement.nextElementSibling.textContent = v.desc.length+'/5000'; }
+      if (k==='time'){ inp.parentElement.nextElementSibling.textContent = fmtWhen(v.time); }
+    }));
+    el.querySelectorAll('[data-act]').forEach(b => b.onclick = () => {
+      if (uploading) return;
+      const a = b.dataset.act;
+      if (a==='del') videos.splice(i,1);
+      if (a==='up' && i>0) [videos[i-1],videos[i]]=[videos[i],videos[i-1]];
+      if (a==='down' && i<videos.length-1) [videos[i+1],videos[i]]=[videos[i],videos[i+1]];
+      render();
+    });
+    list.appendChild(el);
+  });
+  const P = plats(); const done = videos.filter(v=>isDone(v,P) && v.st && Object.keys(v.st).length).length, err = videos.filter(v=>v.status==='error').length;
+  $('#summary').innerHTML = `<span>Kul: <b>${videos.length}</b></span><span style="color:var(--green)">Upload: ${done}</span>${err?`<span style="color:#ff7b6b">Error: ${err}</span>`:''}`;
+}
+function statusText(v){
+  const st = v.st || {}, out = [];
+  const line = (name, o, okTxt) => {
+    if (!o) return;
+    let t;
+    if (o.s==='uploading') t = `⬆ Upload ho raha hai… ${v.progress}%`;
+    else if (o.s==='waiting') t = '⏳ Line me…';
+    else if (o.s==='done') t = `<span style="color:var(--green)">✓ ${okTxt}</span>`;
+    else if (o.s==='error') t = `<span style="color:#ff7b6b">✕ ${esc(o.msg)}</span>`;
+    else return;
+    out.push(`<div class="pline"><b>${name}:</b> ${t}</div>`);
+  };
+  line('▶️ YouTube', st.yt, `Upload ho gaya${v.publishAt?(' · '+fmtWhen(v.publishAt)+' par public hoga'):''} · <a href="https://studio.youtube.com/video/${v.videoId}/edit" target="_blank" style="color:var(--blue)">Studio me kholiye</a>`);
+  line((st.meta&&st.meta.label)||'📸 Insta/FB', st.meta, `Queue me · ${fmtWhen(v.metaAt)} ke aas-paas post hoga`);
+  return out.join('');
+}
+function plats(){ return {yt:$('#pf_yt').checked, ig:$('#pf_ig').checked, fb:$('#pf_fb').checked}; }
+function isDone(v,P){ const st=v.st||{}; return (!P.yt || st.yt?.s==='done') && (!(P.ig||P.fb) || st.meta?.s==='done'); }
+$('#sortBtn').onclick = () => { if(uploading) return; videos.sort((a,b)=>a.file.name.localeCompare(b.file.name,undefined,{numeric:true})); render(); };
+$('#clearBtn').onclick = () => { if(uploading) return; if (confirm('Saari videos list se hata dein?')){ videos=[]; render(); } };
+
+/* ============ Upload ============ */
+function buildDescription(v){
+  let d = (v.desc||'').trim();
+  const extra = [];
+  const def = store.get('defTags','').split(/\s+/).filter(h=>h.startsWith('#'));
+  def.unshift(...(v.hashtags||[]));
+  if ($('#addShorts').value==='true') def.unshift('#shorts');
+  def.forEach(h => { if (!new RegExp('(^|\\s)'+h.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(\\s|$)','i').test(d)) extra.push(h); });
+  if (extra.length) d = (d ? d+'\n\n' : '') + extra.join(' ');
+  return d.replace(/[<>]/g,'').slice(0,5000);
+}
+function buildTags(v){
+  const out = []; let len = 0;
+  for (let t of v.tags){ t = t.replace(/^#/,'').replace(/[<>,]/g,'').trim(); if(!t || out.includes(t)) continue;
+    const add = t.length + (t.includes(' ')?2:0) + (out.length?1:0); if (len+add > 480) break; out.push(t); len += add; }
+  return out;
+}
+
+function escRe(h){ return h.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+function buildCaption(v){
+  let d = (v.desc||'').trim().replace(/(^|\s)#shorts\b/gi,'$1').trim();
+  const tags = [...(v.hashtags||[]), ...store.get('defTags','').split(/\s+/).filter(h=>h.startsWith('#'))].filter(h=>h.toLowerCase()!=='#shorts');
+  const extra = tags.filter((h,i,a)=>a.indexOf(h)===i && !new RegExp('(^|\\s)'+escRe(h)+'(\\s|$)','i').test(d));
+  let c = (v.title||'').trim();
+  if (d) c += '\n\n' + d;
+  if (extra.length) c += '\n\n' + extra.join(' ');
+  let n = 0; c = c.replace(/#[\p{L}\p{N}_]+/gu, h => (++n > 30) ? '' : h);
+  return c.replace(/[<>]/g,'').replace(/[ \t]+\n/g,'\n').trim().slice(0,2200);
+}
+function uploadToWorker(v){
+  return new Promise((resolve,reject)=>{
+    if (v.file.size > 95*1024*1024) return reject(new Error('Instagram/Facebook ke liye video 100 MB se chhoti honi chahiye'));
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', store.get('workerUrl','')+'/api/upload');
+    xhr.setRequestHeader('X-App-Key', store.get('appKey',''));
+    xhr.setRequestHeader('X-File-Name', encodeURIComponent(v.file.name));
+    xhr.setRequestHeader('Content-Type', v.file.type || 'video/mp4');
+    xhr.upload.onprogress = e => { if (e.lengthComputable){ v.progress = Math.round(e.loaded/e.total*100); updateProgress(v); } };
+    xhr.onload = () => { let j={}; try{ j = JSON.parse(xhr.responseText); }catch(e){}
+      if (xhr.status===200 && j.key) resolve(j); else reject(new Error(j.error || ('Worker upload fail (HTTP '+xhr.status+')'))); };
+    xhr.onerror = () => reject(new Error('Worker tak upload nahi hua — internet/URL check kariye'));
+    xhr.send(v.file);
+  });
+}
+async function queueMeta(v, P){
+  const mode = $('#pubMode').value;
+  let at = new Date();
+  if (mode==='schedule'){
+    if (!v.time) throw new Error('Publish time nahi hai');
+    at = new Date(v.time);
+  }
+  v.progress = 0; updateProgress(v);
+  const up = await uploadToWorker(v);
+  const platforms = []; if (P.ig) platforms.push('instagram'); if (P.fb) platforms.push('facebook');
+  const cap = buildCaption(v);
+  await wapi('/api/jobs', {method:'POST', body: JSON.stringify({ key: up.key, fileName: v.file.name, title: v.title, igCaption: cap, fbCaption: cap, platforms, at: at.toISOString() })});
+  v.metaAt = at.toISOString();
+}
+
+async function uploadOne(v){
+  const mode = $('#pubMode').value;
+  const status = { privacyStatus: mode==='schedule' ? 'private' : mode, selfDeclaredMadeForKids: $('#kids').value==='true' };
+  if (mode==='schedule'){
+    if (!v.time) throw new Error('Publish time nahi hai — "Time lagaiye" dabaiye');
+    const d = new Date(v.time);
+    if (d.getTime() < Date.now()+5*60000) throw new Error('Publish time kam se kam 5 minute aage hona chahiye');
+    status.publishAt = d.toISOString();
+  }
+  const snippet = { title: (v.title||prettyName(v.file.name)).replace(/[<>]/g,'').slice(0,100), description: buildDescription(v), tags: buildTags(v), categoryId: $('#category').value };
+  if ($('#lang').value){ snippet.defaultLanguage = $('#lang').value; snippet.defaultAudioLanguage = $('#lang').value; }
+
+  let tk = await ensureToken();
+  const url = `https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status&notifySubscribers=${$('#notify').value}`;
+  const start = await fetch(url, { method:'POST', headers:{
+    Authorization:'Bearer '+tk, 'Content-Type':'application/json; charset=UTF-8',
+    'X-Upload-Content-Length': String(v.file.size), 'X-Upload-Content-Type': v.file.type || 'video/mp4' },
+    body: JSON.stringify({snippet, status}) });
+  if (!start.ok) throw new Error(await apiError(start));
+  const session = start.headers.get('Location');
+  if (!session) throw new Error('Upload session URL nahi mila');
+
+  let offset = 0;
+  for (let attempt=0; attempt<4; attempt++){
+    try{
+      const res = await putFile(session, v, offset);
+      v.videoId = res.id; v.publishAt = status.publishAt; return;
+    }catch(e){
+      if (e.fatal || attempt===3) throw e;
+      await new Promise(r=>setTimeout(r, 2000*(attempt+1)));
+      offset = await queryOffset(session, v.file.size);   // resume from where it stopped
+      if (offset === -1) return;                         // already complete
+    }
+  }
+}
+function putFile(session, v, offset){
+  return new Promise((resolve,reject)=>{
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', session);
+    xhr.setRequestHeader('Content-Type', v.file.type || 'video/mp4');
+    if (offset>0) xhr.setRequestHeader('Content-Range', `bytes ${offset}-${v.file.size-1}/${v.file.size}`);
+    xhr.upload.onprogress = e => { if (e.lengthComputable){ v.progress = Math.round((offset+e.loaded)/v.file.size*100); updateProgress(v); } };
+    xhr.onload = () => {
+      if (xhr.status===200 || xhr.status===201){ try{ resolve(JSON.parse(xhr.responseText)); }catch(e){ resolve({}); } }
+      else if (xhr.status>=500) reject(new Error('Server error '+xhr.status));
+      else { const err = new Error(parseErr(xhr.responseText) || ('HTTP '+xhr.status)); err.fatal = true; reject(err); }
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    xhr.send(offset>0 ? v.file.slice(offset) : v.file);
+  });
+}
+async function queryOffset(session, size){
+  const r = await fetch(session, { method:'PUT', headers:{'Content-Range':`bytes */${size}`} });
+  if (r.status===200 || r.status===201) return -1;
+  const range = r.headers.get('Range');
+  return range ? (+range.split('-')[1] + 1) : 0;
+}
+function parseErr(t){ try{ const j = JSON.parse(t); return j.error && (j.error.errors?.[0]?.reason ? `${j.error.errors[0].reason}: ${j.error.message}` : j.error.message); }catch(e){ return ''; } }
+async function apiError(res){
+  const t = await res.text(); const m = parseErr(t) || ('HTTP '+res.status);
+  if (/quotaExceeded/i.test(m)) return 'Aaj ka API quota khatam — kal (Pacific time midnight ke baad) dobara try kariye';
+  if (/uploadLimitExceeded/i.test(m)) return 'Channel ki daily upload limit poori ho gayi';
+  if (res.status===401) { token=null; return 'Login expire — "Reconnect" dabaiye aur dobara upload kariye'; }
+  if (res.status===403 && /insufficient|scope/i.test(m)) return 'Permission nahi mili — Reconnect karke saare boxes tick kariye';
+  return m;
+}
+function updateProgress(v){
+  const rows = $('#list').children; const i = videos.indexOf(v); const el = rows[i]; if (!el) return;
+  const bar = el.querySelector('.progress'); bar.classList.remove('hidden'); bar.firstElementChild.style.width = v.progress+'%';
+  el.querySelector('.status').innerHTML = statusText(v);
+}
+
+$('#uploadBtn').onclick = async () => {
+  if (uploading) return;
+  const P = plats(), mode = $('#pubMode').value;
+  if (!P.yt && !P.ig && !P.fb){ alert('Kam se kam ek platform chuniye (YouTube / Instagram / Facebook).'); return; }
+  const todo = videos.filter(v=>!isDone(v,P));
+  if (!todo.length){ alert('Upload karne ke liye koi nayi video nahi hai.'); return; }
+  if (mode==='schedule' && todo.some(v=>!v.time)){ alert('Kuch videos ka publish time khaali hai. Pehle "⏱ Time lagaiye" dabaiye.'); return; }
+  if (mode==='schedule' && todo.some(v=>new Date(v.time).getTime() < Date.now()+5*60000)){ alert('Kuch videos ka time abhi se 5 minute ke andar ya beet chuka hai. "⏱ Time lagaiye" dobara dabaiye.'); return; }
+  if (todo.some(v=>!v.title.trim())){ alert('Kuch videos ka title khaali hai.'); return; }
+  if ((P.ig||P.fb) && (mode==='unlisted' || mode==='private')){ alert('Instagram/Facebook ke liye Mode "Schedule" ya "Abhi Public" chuniye.'); return; }
+  if (P.ig||P.fb){
+    const s = await checkWorker();
+    if (!s){ alert('Instagram/Facebook ke liye Worker connect nahi hai — Settings dekhiye (Guide → Part 2).'); return; }
+    if (!s.meta){ alert('Settings me Facebook/Instagram connect kariye.'); return; }
+    if (P.ig && !s.meta.igId){ alert('Connected Facebook Page se koi Instagram Business account juda nahi hai.'); return; }
+  }
+  if (P.yt){ try{ await ensureToken(); }catch(e){ alert('YouTube connect nahi hua: '+e.message); return; } }
+  const metaLabel = [P.ig?'📸 Instagram':'', P.fb?'📘 Facebook':''].filter(Boolean).join(' + ');
+  uploading = true; stopFlag = false;
+  $('#uploadBtn').disabled = true; $('#stopBtn').classList.remove('hidden'); $('#stopBtn').textContent = '⏸ Rokiye';
+  todo.forEach(v=>{
+    v.st = v.st || {};
+    if (P.yt && v.st.yt?.s!=='done') v.st.yt = {s:'waiting'};
+    if ((P.ig||P.fb) && v.st.meta?.s!=='done') v.st.meta = {s:'waiting', label: metaLabel};
+    v.status='waiting'; v.progress=0;
+  });
+  render();
+  for (const v of todo){
+    if (stopFlag) break;
+    v.status = 'uploading';
+    if (P.yt && v.st.yt?.s!=='done' && !stopFlag){
+      v.st.yt = {s:'uploading'}; v.progress = 0; updateProgress(v);
+      try{ await uploadOne(v); v.st.yt = {s:'done'}; }
+      catch(e){ v.st.yt = {s:'error', msg:e.message}; if (/quota|Login expire|daily upload/i.test(e.message)) stopFlag = true; }
+      render();
+    }
+    if ((P.ig||P.fb) && v.st.meta?.s!=='done' && !stopFlag){
+      v.st.meta = {s:'uploading', label: metaLabel}; v.progress = 0; updateProgress(v);
+      try{ await queueMeta(v,P); v.st.meta = {s:'done', label: metaLabel}; }
+      catch(e){ v.st.meta = {s:'error', msg:e.message, label: metaLabel}; }
+    }
+    v.status = Object.values(v.st).some(o=>o.s==='error') ? 'error' : 'done';
+    render();
+  }
+  videos.forEach(v=>{ if (v.st) for (const o of Object.values(v.st)) if (o.s==='waiting') o.s=''; if (v.status==='waiting') v.status='ready'; });
+  uploading = false; $('#uploadBtn').disabled = false; $('#stopBtn').classList.add('hidden');
+  render();
+};
+$('#stopBtn').onclick = () => { stopFlag = true; $('#stopBtn').textContent = 'Ruk raha hai (current video ke baad)…'; };
+
+window.addEventListener('beforeunload', e => { if (uploading){ e.preventDefault(); e.returnValue=''; } });
+render();
+</script>
+</body>
+</html>
