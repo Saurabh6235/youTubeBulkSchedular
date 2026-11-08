@@ -1,0 +1,105 @@
+I'm setting up an AI video editing pipeline in this folder. Install these free tools and check that each one works:
+
+HyperFrames (motion graphics): https://github.com/heygen-com/hyperframes — also install its agent skills.
+FFmpeg (cuts, audio, export): https://ffmpeg.org/download.html
+Whisper (captions): https://github.com/openai/whisper
+yt-dlp (download reference videos): https://github.com/yt-dlp/yt-dlp
+Install anything they need first (for example Node.js 22+, Python, Homebrew on Windows11). Ask me before you run anything that needs my permission. When you're done, show me each tool's version so I know it's installed.
+
+I’ll make this a complete 60–90 s Merit Mantra short that follows your style sheet. First I’ll load the video skill and the HyperFrames instructions.
+
+Your channel's look is AI-generated cinematic images (glowing Earth, planes, F1 cars). HyperFrames can source those, plus a natural Hindi AI voice and background music, through a free HeyGen sign-in. You'd double-click a login file I put in the folder and sign in once in your browser. Generating custom AI images uses HyperFrames credits; stock images, voice and music are free with the sign-in. Which way should I make this video?
+Sign in to HeyGen (Recommended)
+Which voice should narrate the video?
+Male Hindi AI voice (Recommended)
+I’m starting the HeyGen sign-in now. In a minute a browser tab will open — please sign in to HeyGen (free) and approve HyperFrames. If Windows shows an admin or SmartScreen prompt, click Yes / Run anyway. The console window will say “Done” when it’s finished.
+
+Waiting on the HeyGen sign-in: a browser tab should have opened from the installer window. Please sign in there and approve HyperFrames. If no tab appeared, tell me and I’ll reopen it. I’m preparing the scenes in the meantime.
+
+The installer opened a HeyGen sign-in page in Chrome (app.heygen.com → “authorize”) and is waiting for you. Please switch to Chrome, sign in or create a free HeyGen account, and click Authorize/Allow for HyperFrames. The installer finishes by itself after that.
+
+While you sign in, I’ll read the HyperFrames format reference so the composition passes its checks.
+
+The free HeyGen sign-in doesn't cover AI image generation or the HeyGen Hindi voice; both need a paid HyperFrames Pro plan. Nothing was charged. The free sign-in still gives music, sound effects and stock photos (good eagle/pigeon/wing cutouts, but some are low-res). How should I make this video?
+Free route (Recommended)
+If we use the free offline voice, which one? (Listen to the two sample files I just sent.)
+omega
+The runner got past the prompt by itself and finished. The export folder currently holds the first, buggy render, which I’ll replace. Checking the new dissolve snapshots.
+
+Scenes no longer overlap, and each dissolve now has a copy of the outgoing frame underneath. Queuing snapshots and the final render (with the survey prompt suppressed) and the 4K export together.
+
+Your short is finished and saved in your export folder. It’s 1 min 23 s, a 4K (2160×3840) master ready to upload, at −14 LUFS loudness, plus a thumbnail. I also sent a 1080p preview and the thumbnail here.
+
+What’s in it: a Hinglish script in the Reference 1 style:
+
+A hook: “575 ton ka plane hawa mein tikta kaise hai?”
+A pigeon flies with no engine.
+Cutting a wing in half shows the airfoil shape and angle of attack.
+Animated airflow shows faster air and low pressure on top, high pressure below, the wing pushing air down, and the LIFT arrow (Newton + Bernoulli).
+The twist: the Wright brothers learned turning from vultures twisting their wingtips, which is what ailerons do today.
+A bird’s alula works like a plane’s slats and flaps, and winglets work like an eagle’s spread feathers.
+Payoff: “metal ki chidiya”, then a comment prompt and your fire-seal end card.
+It follows your style sheet:
+
+Opening and captions: voice from the first frame, and navy subtitle bars of 3–6 words.
+Look and sound: your navy/blue/orange look, keyword pops, and music that lifts at the 280 km/h moment.
+Where it differs from your channel, because we went with the free route:
+
+Visuals: stock photos and cutouts on graded backgrounds, plus animated diagrams, instead of AI-generated cinematic images.
+Voice: the offline “omega” Hindi voice, which sounds more robotic than a natural voice.
+Thumbnail: it shows the plane and the eagle instead of your face, since I don’t have a photo of you to use.
+Length: it runs 83 s, over the sheet’s 55–70 s, because you asked for 1–1.5 min.
+Pacing: visuals change every ~3 s on average, a bit slower than the sheet’s 2.5 s.
+The editable project is in projects\airplane-birds. The job runner window I started has been told to stop, so you can close it if it’s still open.
+
+If you’d like a more natural voice and AI cinematic images on future videos, a HyperFrames Pro plan unlocks both, or you can record the voiceover yourself.
+
+Merit-Mantra_Airplane-vs-Birds-thumbnail.jpg
+Merit-Mantra_Airplane-vs-Birds_preview-1080p.mp4
+Merit-Mantra_Airplane-vs-Birds_preview-1080p
+.mp4
+MP4
+
+Voice sample hm omega
+MP3 
+
+Voice sample hm psi
+MP3 
+make a package of the whole chats,skills and entire conversation and transfer it to the code section, so that i can access this project from code section to save some credits.
+
+I can’t move this chat itself into Claude Code. What I can do is put everything it would need into your D:\AI Video Editor folder, so a Claude Code session opened there picks it all up:
+
+a CLAUDE.md that Claude Code reads automatically;
+a full handoff document;
+a reusable “make a short” skill;
+all the build scripts. These currently exist only in my cloud workspace, so they’d be lost otherwise.
+Your project is packaged in D:\AI Video Editor, ready for Claude Code. The chat itself can’t be moved, so everything it established is now written into the folder, and Claude Code reads it from there:
+
+CLAUDE.md: Claude Code loads this automatically when you open it in this folder. It covers your channel, the installed tools and versions, the free-plan limits we hit, the “omega” voice, and the house rules (canvas size, loudness, render settings).
+HANDOFF.md: the full record of this conversation. It covers:
+the setup steps;
+the 10 reference reels and their measurements;
+how the airplane/birds video was built: script, images, music and effect timings, end card;
+the exact rebuild commands and every bug we fixed;
+open ideas.
+A copy is also saved in your claude.ai Project.
+style-sheet.md: unchanged, still the default for every video.
+A “merit-mantra-short” skill: an 8-step recipe for making the next short, from topic to the 4K file in export.
+The build scripts in projects\airplane-birds\pipeline:
+voice joining, image grading, the audio mix and the HyperFrames scene generator;
+the script and timing data;
+the joined voiceover.
+They only existed in my cloud workspace before; I’ve adapted them to run on Windows, but they haven’t been run there yet, so the first run may need a path fix.
+The reference-analysis scripts, in reference\analysis\scripts.
+I can’t write into the .claude folder from here, so the skill is in .agents\skills\merit-mantra-short. On your first session, ask Claude Code to copy it into .claude\skills; CLAUDE.md already tells it to.
+
+To start, open Claude Code in D:\AI Video Editor and try: “Read CLAUDE.md and HANDOFF.md, then make a new Merit Mantra short about [topic].” Claude Code runs commands on your PC directly, so you won’t need the job runner window any more.
+
+I can’t confirm that working in Claude Code will use fewer credits; usage there also counts toward your plan.
+
+
+Handoff
+Document·MD 
+
+
+
